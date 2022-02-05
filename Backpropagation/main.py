@@ -12,7 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 from functions import *
+from generator import create_data
 
 
 
@@ -112,7 +114,6 @@ class Network:
         
         self.layers = []
         current_input_size = self.input_size
-        print("Input size:", self.input_size)
     
         for layer in config.sections()[1:]:
             # Size of layer
@@ -157,18 +158,34 @@ class Network:
         y = np.copy(x)
         for layer in self.layers:
             y = layer.forward_pass(y)
+            
+        if self.use_softmax == True:
+            return softmax(y)
         return y
-        
+    
+    
+    
+    def backward_pass(self):
+        ''' Do a backwards pass.'''
+        pass
 
 
 
 
 if __name__=="__main__":
+    # Create data
+    train_data, val_data, test_data = create_data(N = 20, n_samples = 1000, noise_prob=0.005, flatten = True)
+    
+    # Create Neural Network
     nn = Network('example')
     
+    # Test Network on training data
+    train_targets, train_imgs = train_data
     
-
-
+    # Forward the training imgs
+    estimate = nn.forward_pass(train_imgs)
+    
+    
 
 
 
