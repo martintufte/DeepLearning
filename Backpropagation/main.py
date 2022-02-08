@@ -44,28 +44,72 @@ class Layer:
             self.f_der = logistic_der
         else:
             raise TypeError("Type must be linear, relu, tanh or logistic.")
+        
+        # Cache last input, derivative wrt. layer, weigths and biases
+        self.last_input = None
+        self.JL = None
+        self.JL_W = None
+        self.JL_b = None
+        
+    
     
     
     def forward_pass(self, x):
         """
-        Input shape: (parent.size, n_samples)
+        Input shape: (input_size, n_samples)
         Output shape: (size, n_samples)
         """
         if x.shape[0] != self.input_size:
             raise TypeError("Layer recieved wrong input size!")
         
-        return self.f(self.W @ x + self.b) # Note: bias is added to each column
+        # Cache input, needed in backpropagation
+        self.last_input = np.copy(x)
+        
+        # Return output (note that bias is added to each column)
+        return self.f(self.W @ x + self.b)
         
     
-    def backward_pass(self):
-        pass
+    
+    def backward_pass(self, JL):
+        '''
+        JL is the Jacobian of L with respect to next layer.
+        
+        '''
+        self.JL = np.copy(JL)
+        
+        return self.W.T @ (JL * self.f_der(self.W @ self.last_input + self.b))
+        
+        
+    
+    
+    
+    def update_weights(self):
+        '''
+        Update weights and biases in the layer.
 
-
+        '''
+        n_samples = self.last_input.shape[1]
+        
+        # Derivative of loss with respect to weigths and biases
+        self.JL_W = (self.JL * self.f_der(self.W @ self.last_input + self.b)) @ self.last_input.T
+        self.JL_b = (self.JL * self.f_der(self.W @ self.last_input + self.b)) @ np.ones((n_samples,1))
+        
+        # Update weights using gradient descent
+        self.W -= self.lrate * self.JL_W
+        self.b -= self.lrate * self.JL_b
+        
 
 
 class Network:
     def __init__(self, config_file_name):
-        ''' parse the information from the configuration file '''
+        ''' Parse the information from the configuration file '''
+        
+        ### Cache information in network
+        self.last_output = None
+        self.loss_history = []
+        self.batch_size_history = []
+        
+        
         
         config = configparser.ConfigParser()
         config.read(config_file_name + '.ini')
@@ -81,10 +125,20 @@ class Network:
             
         # loss function ("mse" or "x_entropy")
         if "loss" in config['GLOBALS']:
-            self.loss = config['GLOBALS']["loss"]
+            self.loss_type = config['GLOBALS']["loss"]
         else:
-            self.loss = "mse"
-            
+            self.loss_type = "mse"
+        
+        # Loss function and derivative
+        if self.loss_type == "mse":
+            self.loss = mse
+            self.loss_der = mse_der
+        elif self.loss_type == "x-entropy":
+            self.loss = x_entropy
+            self.loss_der = x_entropy_der
+        else:
+            print("Loss function name not recognized!")
+        
         # Regularization ("none", "L1" or "L2")
         if "reg" in config['GLOBALS']:
             self.reg = config['GLOBALS']["reg"]
@@ -151,6 +205,8 @@ class Network:
             
             # update current input size
             current_input_size = layer_size
+            
+            
 
 
     def forward_pass(self, x):
@@ -158,37 +214,129 @@ class Network:
         y = np.copy(x)
         for layer in self.layers:
             y = layer.forward_pass(y)
-            
+        
+        # Softmax output if specified
         if self.use_softmax == True:
-            return softmax(y)
-        return y
+            y = softmax(y)
+        
+        # Cache output
+        self.last_output = np.copy(y)
+        
+        #self.batch_size_history.append(y.shape[1])
+        
     
     
-    
-    def backward_pass(self):
+    def backward_pass(self, target):
         ''' Do a backwards pass.'''
-        pass
+        
+        # Cache loss in history
+        self.loss_history.append( self.loss(self.last_output, target) )
+        
+        n_samples = self.last_output.shape[1]
+        
+        # Derivative of loss with respect to inputs
+        JL = self.loss_der(self.last_output, target)
+        
+        # Account for softmax:
+        if self.use_softmax == True:
+            for j in range(n_samples):
+                output_j = self.last_output[:,j]
+                
+                # Multiply JL with softmamx derivative
+                JL[:,j] = softmax_der(output_j) @ JL[:,j]
+        
+        
+        # Backward pass trough each layer
+        for layer in self.layers[::-1]:
+            JL = layer.backward_pass(JL)
+        
+        
+        
+    def update_weights(self):
+        ''' Update weights in the layers. '''
+        
+        for layer in self.layers:
+            layer.update_weights()
+            
+    
+    def do_iteration(self, batch_samples, batch_targets):
+        ''' Feed minibatch through + update weights.'''
+        self.forward_pass(batch_samples)
+        self.backward_pass(batch_targets)
+        self.update_weights()
 
-
+        
+    def fit(self, data, batch_size, epochs):
+        '''
+        Fit the network using SGD.
+        '''
+        targets, samples = data
+        
+        # Number of samples in data
+        n_samples = samples.shape[1]
+        
+        # Number of batches per epoch (rounded down)
+        n_batches = int(n_samples / batch_size)
+        
+        print('n_samples = ', n_samples)
+        print('n_batches per epoch =', n_batches)
+        
+        # Iterate through the epochs
+        for epoch in range(epochs):
+            # Generate a random permutation (stochastic part)
+            p = np.random.permutation(n_samples)
+    
+            for i in range(n_batches):
+                # Start / end idx for batch permutation
+                start = i*batch_size
+                end = (i+1)*batch_size
+                
+                # Forward pass + Backward pass + update weights
+                #print(samples[:, p[start:end]].shape)
+                #print(targets[:, p[start:end]].shape)
+                self.do_iteration(samples[:, p[start:end]], targets[:, p[start:end]])
+    
+        # plot the error after the training session
+        plt.plot([np.sum(i) for i in self.loss_history])
+    
+    
+    
+    def test(self, data):
+        '''
+        Function for visualizing errors made by the Neural network.
+        '''
+        targets, samples = data
+        
+        # Forward the samples
+        self.forward_pass(samples)
+        
+        # Number of correct classifications
+        correct = self.last_output.argmax(axis=0) == targets.argmax(axis=0)
+        print('Neural network succsevily classified', sum(correct), 'out of', correct.shape[0], 'samples.')
+        
+        # visualize wrong classifications
+        wrong = (correct == False)
+        if np.sum(wrong) != 0:
+            wrong_pred = self.last_output.argmax(axis=0)[wrong]
+            n = min(10, np.sum(wrong))
+            
+            N = int(np.sqrt(len(samples.T[0].flatten())))
+            fig, axes = plt.subplots(1, n, figsize=(N, N))
+            for i, ax in enumerate(axes.flat):
+                ax.imshow(samples[:,wrong].T[i].reshape(N,N), cmap='Greys')
+                ax.set_xlabel(['Up', 'Left', 'Down', 'Right'][wrong_pred[i]])
+                ax.set_axis_off()
+            plt.show()
 
 
 if __name__=="__main__":
     # Create data
-    train_data, val_data, test_data = create_data(N = 20, n_samples = 1000, noise_prob=0.005, flatten = True)
+    train_data, val_data, test_data = create_data(N = 24, n_samples = 20000, noise_prob=0.01, flatten = True)
     
     # Create Neural Network
     nn = Network('example')
     
-    # Test Network on training data
-    train_targets, train_imgs = train_data
-    
-    # Forward the training imgs
-    estimate = nn.forward_pass(train_imgs)
-    
-    
-
-
-
-
+    # Fit Neural Network
+    nn.fit(train_data, batch_size=200, epochs=15)
 
 

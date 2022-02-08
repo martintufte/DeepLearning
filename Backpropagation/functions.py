@@ -49,30 +49,52 @@ def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
 
-def softmax_der(x):
+def softmax_der(s):
     """Compute the derivative of softmax values for each column in x."""
-    s = softmax(x)
-    return s - s**2
+    # Note that s = softmax(x)
+    return np.diag(s) - np.outer(s,s)
 
 
 
 ### Loss functions and their derivatives
-
-def mse(x, t):
-    """Compute mse for each column in x."""
-    return np.mean((x-t)**2, axis=0)
-
-def mse_der(x, t):
-    pass
-
 
 def x_entropy(x, t):
     """Compute cross entropy for each column in x."""
     return - np.sum(t * np.log(x), axis=0)
 
 def x_entropy_der(x, t):
-    """Compute derivative of the cross entropy for each column in x."""
-    return 
+    """Compute derivative of cross entropy for each column in x."""
+    return - t/x
+
+
+def mse(x, t):
+    """Compute mean squared error for each column in x."""
+    return np.mean((x-t)**2, axis=0)
+
+def mse_der(x, t):
+    """Derivative of mean squared error for each column in x."""
+    ncol = x.shape[0]
+    return 2*(x - t) / ncol
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

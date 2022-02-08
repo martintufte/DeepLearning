@@ -111,7 +111,7 @@ def generate_data(N, n_samples, noise_prob = 0, flatten=False):
 
 
 
-def create_data(N, n_samples, noise_prob = 0, flatten=False, train_prop=0.7, val_prop=0.1):
+def create_data(N, n_samples, noise_prob = 0, flatten=False, train_prop=0.7, val_prop=0.2):
     targets, imgs = generate_data(N, n_samples, noise_prob, flatten)
     
     # Get number of samples
