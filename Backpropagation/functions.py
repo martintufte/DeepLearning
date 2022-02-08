@@ -2,19 +2,17 @@
 """
 Created on Tue Feb  1 11:21:33 2022
 
-@author: Teksle
+@author: martigtu@stud.ntnu.no
 """
 
 import numpy as np
-
-
 
 ### Activation functions and their derivatives
 
 def identity(x):
     """Compute identity componentwise in x."""
     return x
-def identity_der(x):
+def identity_der(x): 
     """Compute the derivative of identity componentwise in x."""
     return np.ones_like(x)
 
@@ -48,9 +46,8 @@ def softmax(x):
     """Compute softmax values for each column in x."""
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
-
-def softmax_der(s):
-    """Compute the derivative of softmax values for each column in x."""
+def softmax_grad(s):
+    """Compute the gradient of s=softmax(x)."""
     # Note that s = softmax(x)
     return np.diag(s) - np.outer(s,s)
 
@@ -58,46 +55,21 @@ def softmax_der(s):
 
 ### Loss functions and their derivatives
 
-def x_entropy(x, t):
-    """Compute cross entropy for each column in x."""
-    return - np.sum(t * np.log(x), axis=0)
-
-def x_entropy_der(x, t):
-    """Compute derivative of cross entropy for each column in x."""
-    return - t/x
-
-
 def mse(x, t):
     """Compute mean squared error for each column in x."""
     return np.mean((x-t)**2, axis=0)
 
-def mse_der(x, t):
+def mse_grad(x, t):
     """Derivative of mean squared error for each column in x."""
     ncol = x.shape[0]
     return 2*(x - t) / ncol
-    
 
 
 
+def x_entropy(x, t):
+    """Compute cross entropy for each column in x."""
+    return - np.sum(t * np.log(x), axis=0)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def x_entropy_grad(x, t):
+    """Compute derivative of cross entropy for each column in x."""
+    return - t/x

@@ -2,7 +2,7 @@
 """
 Created on Tue Feb  1 13:04:19 2022
 
-@author: Teksle
+@author: martigtu@stud.ntnu.no
 """
 
 import numpy as np
@@ -149,17 +149,3 @@ if __name__=="__main__":
     
     visualize(train_data[1], 10)
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
