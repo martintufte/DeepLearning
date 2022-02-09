@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb  1 13:04:19 2022
+Created on Wed Feb  9 21:20:08 2022
 
-@author: martigtu@stud.ntnu.no
+@author: marti
 """
 
 import numpy as np
@@ -147,8 +147,12 @@ def visualize(imgs, n_samples):
     
     
     
-if __name__=="__main__":
-    train_data, val_data, test_data = create_data(N = 24, n_samples = 1000, noise_prob=0.005, flatten = True)
-    
-    visualize(train_data[1], 10)
-    
+class Data:
+    def __init__(self, N, n_samples, noise_prob, flatten):
+        self.N = N
+        self.n_samples = n_samples
+        
+        all_data = create_data(N, n_samples, noise_prob, flatten)
+        
+        self.train, self.val, self.test = all_data
+

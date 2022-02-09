@@ -65,7 +65,6 @@ def mse_grad(x, t):
     return 2*(x - t) / ncol
 
 
-
 def x_entropy(x, t):
     """Compute cross entropy for each column in x."""
     return - np.sum(t * np.log(x), axis=0)
@@ -73,3 +72,15 @@ def x_entropy(x, t):
 def x_entropy_grad(x, t):
     """Compute derivative of cross entropy for each column in x."""
     return - t/x
+
+
+
+### Regulization function derivatives
+
+def L1_der(w):
+    pass
+
+def L2_der(w):
+    pass
+
+

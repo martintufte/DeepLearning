@@ -6,21 +6,18 @@ Created on Tue Feb  1 10:44:52 2022
 """
 
 from Network import Network
-from generator import create_data
+from Data import Data
 
 
 if __name__=="__main__":
     
-    ### Example to show in the class:
+    # Generate data
+    data = Data(N = 30, n_samples = 20000, noise_prob=0.01, flatten = True)
     
-    # Create data
-    train_data, val_data, test_data = create_data(N = 24, n_samples = 20000, noise_prob=0.05, flatten = True)
-    
-    # Create Neural Network
-    # When using x-entropy, the learning rate should be smaller
-    nn = Network('example')
+    # Create neural network
+    network = Network('example')
     
     # Fit Neural Network
-    nn.fit(train_data, val_data, batch_size=250, epochs=5)
+    network.fit(data.train, data.val, batch_size=250, epochs=10)
 
 
