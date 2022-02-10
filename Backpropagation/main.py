@@ -12,12 +12,12 @@ from Data import Data
 if __name__=="__main__":
     
     # Generate data
-    data = Data(N = 30, n_samples = 20000, noise_prob=0.01, flatten = True)
+    data = Data(N = 30, n_samples = 20000, noise_prob=0.05, flatten = True)
     
     # Create neural network
-    network = Network('example')
+    nn = Network('config_files/network.ini')
     
-    # Fit Neural Network
-    network.fit(data.train, data.val, batch_size=250, epochs=10)
+    # Fit network to the data
+    nn.fit(data, batch_size=250, epochs=5)
 
 
