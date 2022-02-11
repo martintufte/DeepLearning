@@ -191,6 +191,7 @@ class Network:
                 print('\nLoss:', np.mean(self.loss(network_output, batch[0])))
                 sum_error = sum(network_output.argmax(axis=0) != batch[0].argmax(axis=0))
                 print('Error: ', sum_error, 'of', batch[0].shape[1])
+                print('Accuracy: ', round((1-sum_error/batch[0].shape[1])*100,2), '%', sep='')
         else:
             return network_output
     
@@ -308,6 +309,8 @@ class Network:
                 # Cache regularization loss
                 if have_regulizer:
                     self.reg_loss.append(self.get_reg_loss())
+                else:
+                    self.reg_loss.append(0)
                 
                 # Backpropagation and update weights
                 self.backward_pass(batch_targets)
@@ -325,18 +328,21 @@ class Network:
         # Add test loss
         test_targets, test_samples = data.test
         test_loss = np.mean(self.loss(self.predict(test_samples), test_targets))
-        ax.scatter(x_axis[-1], [test_loss], color='y', marker='x', label='Test loss')
-        ax.legend()
-        ax.set_xlabel('Epochs', fontsize=10)
+        ax.scatter(x_axis[-1], [test_loss], color='b', marker='x', label='Test loss')
         ax.set_ylabel('Loss: '+self.loss_type, color='black', fontsize=10)
+        ax.set_xlabel('Epochs', fontsize=10)
+        ax.legend(loc='upper right')
         
         
         ### Plot the regularization loss is aplicable
-        if have_regulizer and plot_reg:
+        if plot_reg:
             ax2=ax.twinx()
             ax2.plot(x_axis, self.reg_loss,
-                     linewidth=1.5, color='green', label='Regularization loss')
-            ax2.set_ylabel(self.reg, color="green", fontsize=10)
+                     linewidth=0.8, color='green', label='Regularization loss')
+            ax2.set_ylabel('Regularization: '+self.reg, color="black", fontsize=10)
+            ax2.legend(loc='lower left')
+        
+        
         plt.show()
         
     
