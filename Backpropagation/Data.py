@@ -19,9 +19,9 @@ def generate_imgs(N, n_samples, noise_prob = 0, flatten=False):
     
     ### Additional parameters
     delta_x = 0.3
-    delta_y = 0.1
-    delta_theta = 20
-    length_min = 0.5
+    delta_y = 0.2
+    delta_theta = 25
+    length_min = 0.4
     length_max = 0.8
     force_center = False
     
@@ -127,20 +127,8 @@ def create_data(N, n_samples, noise_prob = 0, flatten=False, train_prop=0.7, val
     test_data = (targets[n_train+n_val :].T, imgs[n_train+n_val :].T)
     
     return train_data, val_data, test_data
-
-
-
-def visualize(imgs, n_samples):
-    '''
-    Function for visualizing up to 10 random images
-    '''
-    fig, axes = plt.subplots(1, n_samples, figsize=(30, 30))
-    for i, ax in enumerate(axes.flat):
-        ax.imshow(imgs[i], cmap='Greys')
-        ax.set_axis_off()
-    plt.show()
     
-    
+
     
 class Data:
     def __init__(self, N, n_samples, noise_prob, flatten):

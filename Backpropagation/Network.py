@@ -13,7 +13,8 @@ from ast import literal_eval
 # Import Layer object
 from Layer import Layer
 # Import loss functions and softmax and their gradients
-from functions import mse, mse_grad, x_entropy, x_entropy_grad, softmax, softmax_grad
+from functions import mse, mse_grad, x_entropy, x_entropy_grad, \
+    softmax, softmax_grad, visualize
 
 
 class Network:
@@ -171,6 +172,7 @@ class Network:
         # Cache output in the network
         self.last_output = network_output
         
+        
         ### Verbose
         if verbose == True:
             '''
@@ -189,13 +191,19 @@ class Network:
                 print(batch[0][:,:max_disp])
             
                 print('\nLoss:', np.mean(self.loss(network_output, batch[0])))
-                sum_error = sum(network_output.argmax(axis=0) != batch[0].argmax(axis=0))
+                wrong_predictions = network_output.argmax(axis=0) != batch[0].argmax(axis=0)
+                sum_error = sum(wrong_predictions)
                 print('Error: ', sum_error, 'of', batch[0].shape[1])
                 print('Accuracy: ', round((1-sum_error/batch[0].shape[1])*100,2), '%', sep='')
+            
+            ### Also visualize upwards of 10 prediction mistakes
+            n = min(sum_error, 10)
+            data_wrong = (network_output[:,wrong_predictions][:,0:n],
+                          batch[1][:,wrong_predictions][:,0:n])
+            visualize(data_wrong, n)
         else:
             return network_output
-    
-    
+        
     
     
     def predict(self, batch):
@@ -344,33 +352,3 @@ class Network:
         
         
         plt.show()
-        
-    
-    
-    
-    def test(self, data):
-        '''
-        Function for visualizing errors made by the Neural network.
-        '''
-        targets, samples = data
-        
-        # forward_pass the samples
-        prediction = self.predict(samples)
-        
-        # Number of correct classifications
-        correct = prediction.argmax(axis=0) == targets.argmax(axis=0)
-        print('Neural network succsevily classified', sum(correct), \
-              'out of', correct.shape[0], 'samples.')
-        
-        # visualize wrong classifications
-        wrong = (correct == False)
-        if np.sum(wrong) != 0:
-            wrong_pred = prediction.argmax(axis=0)[wrong]
-            n = min(10, np.sum(wrong))
-            
-            N = int(np.sqrt(len(samples.T[0].flatten())))
-            fig, axes = plt.subplots(1, n, figsize=(N, N))
-            for i, ax in enumerate(axes.flat):
-                ax.imshow(samples[:,wrong].T[i].reshape(N,N), cmap='Greys')
-                ax.set_xlabel(['Up', 'Left', 'Down', 'Right'][wrong_pred[i]])
-            plt.show()

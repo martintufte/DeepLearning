@@ -10,16 +10,43 @@ from Data import Data
 
 
 if __name__=="__main__":
-    # Generate data
-    data = Data(N = 30, n_samples = 10000, noise_prob=0.05, flatten = True)
     
     ### Example 1: 3 layers, mse, L1, relu + linear
-    nn = Network('config_files/network.ini')
-    
-    #### Example 2: 5 layers, x-entropy, L1, sigmoid
-    
-    
-    # Fit network to the data
+    data = Data(N = 30, n_samples = 10000, noise_prob=0.05, flatten = True)
+    nn = Network('config_files/example1.ini')
     nn.fit(data, batch_size=250, epochs=5, plot_reg=True)
+    
+    
+    #### Example 2: 2 layers, x-entropy, None, wr, sigmoid
+# =============================================================================
+#     data = Data(N = 30, n_samples = 20000, noise_prob=0.05, flatten = True)
+#     nn = Network('config_files/example2.ini')
+#     nn.fit(data, batch_size=250, epochs=5, plot_reg=True)
+# =============================================================================
+    
+    
+    ### Example 3: 5 layers, mse, L2, relu + tanh (May not work!)
+# =============================================================================
+#     data = Data(N = 30, n_samples = 10000, noise_prob=0.01, flatten = True)
+#     nn = Network('config_files/example3.ini')
+#     nn.fit(data, batch_size=500, epochs=25, plot_reg=True)
+# =============================================================================
+    
+    
+    
+    ### Example 4: 3 layers, x-entropy, L1, relu, (500 size layer + noisy data)
+# =============================================================================
+#     data = Data(N = 30, n_samples = 40000, noise_prob=0.10, flatten = True)
+#     nn = Network('config_files/example4.ini')
+#     nn.fit(data, batch_size=500, epochs=3, plot_reg=True)
+# =============================================================================
+    
+    
+    ### Some useful statistics
+# =============================================================================
+#     nn.forward_pass(data.train, verbose=True)
+#     nn.forward_pass(data.val, verbose=True)
+#     nn.forward_pass(data.test, verbose=True)
+# =============================================================================
 
 
