@@ -21,7 +21,7 @@ def generate_imgs(N, n_samples, noise_prob = 0, flatten=False):
     delta_x = 0.3
     delta_y = 0.2
     delta_theta = 25
-    length_min = 0.4
+    length_min = 0.5
     length_max = 0.8
     force_center = False
     
@@ -131,27 +131,18 @@ def create_data(N, n_samples, noise_prob = 0, flatten=False, train_prop=0.7, val
 
     
 class Data:
-    def __init__(self, N, n_samples, noise_prob, flatten):
+    '''
+    Object that contains the training data
+    '''
+    def __init__(self, N, n_samples, noise_prob, flatten, train_prop=0.7, val_prop=0.2):
         self.N = N
         self.n_samples = n_samples
         
+        ### Generate data
         all_data = create_data(N, n_samples, noise_prob, flatten)
         
+        ### Store training/validation/test set
         self.train, self.val, self.test = all_data
-
-
-if __name__=="__main__":
-    labels, imgs = generate_imgs(N=30, n_samples=5, noise_prob = 0.01, flatten=False)
-
-    visualize(imgs, 5)
-
-
-
-
-
-
-
-
 
 
 

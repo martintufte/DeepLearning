@@ -78,21 +78,26 @@ def x_entropy_grad(x, t):
 
 ### Visualization of data
 
-def visualize(data, n=10):
+def visualize(data, n=10, random=True):
     '''
     Function for visualizing up to 10 images
     '''
     labels, samples = data
     N = int(np.sqrt(len(samples.T[0].flatten())))
+
+    if random:
+        p = np.random.permutation(labels.shape[1])
+    else:
+        p = np.arange(labels.shape[1])
     
     if n==1:
         plt.imshow(samples[0].reshape((N,N)), cmap='Greys')
-        plt.xlabel(['Right', 'Up', 'Left', 'Down'][np.argmax(labels[:,0])])
+        plt.xlabel(['Right', 'Up', 'Left', 'Down'][np.argmax(labels[:,p][:,0])])
     else:
         fig, axes = plt.subplots(1, n, figsize=(N, N))
         for i, ax in enumerate(axes.flat):
-            ax.imshow(samples.T[i].reshape((N,N)), cmap='Greys')
-            ax.set_xlabel(['Right', 'Up', 'Left', 'Down'][np.argmax(labels[:,i])])
+            ax.imshow(samples.T[p][i].reshape((N,N)), cmap='Greys')
+            ax.set_xlabel(['Right', 'Up', 'Left', 'Down'][np.argmax(labels[:,p][:,i])])
     plt.show()
 
 
