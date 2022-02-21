@@ -16,9 +16,13 @@ if __name__=="__main__":
     
     
     ### Example 1: 3 layers, mse, L1, relu + linear
-    data = Data(N = 30, n_samples = 10000, noise_prob=0.05, flatten = True)
+    data1 = Data(N = 30, n_samples = 10000, noise_prob=0.00, flatten = True)
+    data2 = Data(N = 30, n_samples = 10000, noise_prob=0.10, flatten = True)
     nn = Network('config_files/example1.ini')
-    nn.fit(data, batch_size=250, epochs=5, plot_reg=True)
+    #nn.fit(data1, batch_size=250, epochs=5, plot_reg=False)
+    nn.fit(data2, batch_size=250, epochs=5, plot_reg=False)
+    
+    #nn.forward_pass(data2.test, verbose=True)
     
 
     #### Example 2: 2 layers, x-entropy, None, wr, sigmoid
