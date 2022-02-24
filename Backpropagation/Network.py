@@ -20,7 +20,6 @@ from functions import mse, mse_grad, x_entropy, x_entropy_grad, \
 class Network:
     '''
     Neural Network object.
-    
     '''
     def __init__(self, config_file):
         # Cache information about last output
@@ -208,7 +207,7 @@ class Network:
     
     def predict(self, batch):
         '''
-        Identical to the forward_pass function, but after the forward_pass pass,
+        Identical to the forward_pass function, but after the forward pass,
         NO intermediate information is cached.
         '''
         network_prediction = np.copy(batch)
@@ -342,7 +341,7 @@ class Network:
         ax.legend(loc='upper right')
         
         
-        ### Plot the regularization loss is aplicable
+        ### Plot the regularization loss if aplicable
         if plot_reg:
             ax2=ax.twinx()
             ax2.plot(x_axis, self.reg_loss,
