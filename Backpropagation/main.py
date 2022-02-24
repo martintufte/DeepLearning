@@ -12,7 +12,7 @@ from functions import visualize
 
 if __name__=="__main__":
     # To enable verbose
-    #nn.forward_pass(data.train, verbose=True)
+    nn.forward_pass(data.train, verbose=True)
     
     
     ### Example 1: 3 layers, mse, L1, relu + linear
