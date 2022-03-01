@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from enum import auto, Enum
 
 
-class DataMode (Enum):
+class DataMode(Enum):
     """
     The definitions of data modes -- mono or color,  binary or float,
     all classes or one missing. Standard setup would be MONO_BINARY_COMPLETE
@@ -106,6 +106,7 @@ class StackedMNISTData:
         self.train_images, self.train_labels = self.__prepare_data_set(training=True)
         self.test_images, self.test_labels = self.__prepare_data_set(training=False)
 
+
     def get_full_data_set(self, training: bool = True) -> tuple:
         """
         Get the full, prepared dataset. Since the dataset is so small, this works well.
@@ -117,6 +118,7 @@ class StackedMNISTData:
         else:
             images, classes = self.test_images, self.test_labels
         return images, classes
+
 
     def __prepare_data_set(self, training: bool = True) -> tuple:
         """
@@ -164,6 +166,7 @@ class StackedMNISTData:
 
         return images, labels
 
+
     def get_random_batch(self, training: bool = True, batch_size: np.int = None) -> tuple:
         """
         Generate a batch of data. We can choose to use training or testing data.
@@ -187,6 +190,7 @@ class StackedMNISTData:
             images = np.expand_dims(images, axis=0)
 
         return images, labels
+
 
     def batch_generator(self, training: bool = True, batch_size: np.int = None) -> tuple:
         """
@@ -212,6 +216,7 @@ class StackedMNISTData:
 
             yield images[start_position:end_position],  labels[start_position:end_position]
             start_position = end_position
+
 
     def plot_example(self, images: np.ndarray = None, labels: np.ndarray = None) -> None:
         """
@@ -244,7 +249,9 @@ class StackedMNISTData:
         plt.show()
 
 
-if __name__ == "__main__":
+
+
+if __name__=="__main__":
     gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_MISSING, default_batch_size=9)
     img, cls = gen.get_random_batch(batch_size=9)
     gen.plot_example(images=img, labels=cls)
