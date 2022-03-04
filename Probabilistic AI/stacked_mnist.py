@@ -110,7 +110,7 @@ class StackedMNISTData:
     def get_full_data_set(self, training: bool = True) -> tuple:
         """
         Get the full, prepared dataset. Since the dataset is so small, this works well.
-        Then we cans end it directly to keras' fit-method
+        Then we can send it directly to keras' fit-method
         """
 
         if training is True:
@@ -252,9 +252,10 @@ class StackedMNISTData:
 
 
 if __name__=="__main__":
-    gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_MISSING, default_batch_size=9)
-    img, cls = gen.get_random_batch(batch_size=9)
-    gen.plot_example(images=img, labels=cls)
+    gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_MISSING, default_batch_size=2048)
+    
+    #img, cls = gen.get_random_batch(batch_size=20)
+    #gen.plot_example(images=img, labels=cls)
 
-    for (img, cls) in gen.batch_generator(training=False, batch_size=2048):
-        print(f"Batch has size: Images: {img.shape}; Labels {cls.shape}")
+    #for (img, cls) in gen.batch_generator(training=False, batch_size=2048):
+    #    print(f"Batch has size: Images: {img.shape}; Labels {cls.shape}")

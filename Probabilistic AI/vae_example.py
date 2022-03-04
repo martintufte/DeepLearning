@@ -9,7 +9,8 @@ Created on Thu Feb 24 16:41:13 2022
 from tensorflow.keras.datasets import mnist
 
 from tensorflow import keras
-from tensorflow.keras.models import Model, Sequential
+import tensorflow
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, \
     Conv2DTranspose, Lambda, Reshape
 from tensorflow.keras import backend
@@ -45,15 +46,19 @@ def load_MNIST():
 ### Encoder
 x_train, x_test, y_train, y_test, img_width, img_height, n_channels = load_MNIST()
 
-# Number of latent features
+
+# Defining the number of latent features and the input shape
 latent_dim = 2
 input_shape = (img_width, img_height, n_channels)
 
 
 # Method 1
+
+# Define the input
 input_img = Input(shape = input_shape, name = 'Encoder_input')
+
 x = Conv2D(32, kernel_size=(3, 3), padding='same', activation='relu')(input_img)
-x = Conv2D(64, kernel_size=(3, 3), padding='same', activation='relu',strides=(2, 2))(x)
+x = Conv2D(64, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='relu')(x)
 x = Conv2D(64, kernel_size=(3, 3), padding='same', activation='relu')(x)
 x = Conv2D(64, kernel_size=(3, 3), padding='same', activation='relu')(x)
 
@@ -67,15 +72,20 @@ x = Dense(32, activation='relu')(x)
 mu         = Dense(latent_dim, name='latent_mean')(x)
 log_sigma2 = Dense(latent_dim, name='latent_log_variance')(x)
 
-# REPARAMETERIZATION TRICK
+
+## Reparametrization Trick
 def sample_Z(args):
-  mu, log_sigma2 = args
-  eps = backend.random_normal(shape=(backend.shape(mu)[0], backend.int_shape(mu)[1]))
-  return mu + backend.exp(log_sigma2 / 2) * eps
+  ''' Sample from the latent distribution Z'''  
+  mu, log_sigma2 = args  
+  # Standard deviation
+  std = backend.exp(log_sigma2 / 2)
+  # Error term
+  eps = backend.random_normal(shape=(backend.shape(mu)[0], backend.int_shape(mu)[1]))    
+  return mu + std * eps
 
-z = Lambda(sample_Z, output_shape=(latent_dim, ), name='Z')([mu, log_sigma2])
+Z = Lambda(sample_Z, output_shape=(latent_dim, ), name='Z')([mu, log_sigma2])
 
-encoder = Model(input_img, [mu, log_sigma2, z], name='Encoder')
+encoder = Model(input_img, [mu, log_sigma2, Z], name='Encoder')
 print(encoder.summary())
 
 
@@ -99,14 +109,14 @@ x = Reshape((conv_shape[1], conv_shape[2], conv_shape[3]))(x)
 x = Conv2DTranspose(32, 3, padding='same', activation='relu',strides=(2, 2))(x)
 #Can add more conv2DTranspose layers, if desired. 
 #Using sigmoid activation
-x = Conv2DTranspose(num_channels, 3, padding='same', activation='sigmoid', name='decoder_output')(x)
+x = Conv2DTranspose(n_channels, 3, padding='same', activation='sigmoid', name='decoder_output')(x)
 
 # Define and summarize decoder model
 decoder = Model(decoder_input, x, name='decoder')
 decoder.summary()
 
 # apply the decoder to the latent sample 
-z_decoded = decoder(z)
+z_decoded = decoder(Z)
 
 
 # =========================
@@ -116,15 +126,15 @@ class CustomLayer(keras.layers.Layer):
     ''' Let us add a class to define a custom layer with loss '''
 
     def vae_loss(self, x, z_decoded):
-        x = K.flatten(x)
-        z_decoded = K.flatten(z_decoded)
+        x = backend.flatten(x)
+        z_decoded = backend.flatten(z_decoded)
         
         # Reconstruction loss (as we used sigmoid activation we can use binarycrossentropy)
         recon_loss = tensorflow.keras.metrics.binary_crossentropy(x, z_decoded)
         
         # KL divergence
-        kl_loss = -5e-4 * K.mean(1 + z_sigma - K.square(z_mu) - K.exp(z_sigma), axis=-1)
-        return K.mean(recon_loss + kl_loss)
+        kl_loss = -5e-4 * backend.mean(1 + log_sigma2 - backend.square(mu) - backend.exp(log_sigma2), axis=-1)
+        return backend.mean(recon_loss + kl_loss)
 
     # add custom loss to the class
     def call(self, inputs):
@@ -186,7 +196,7 @@ plt.imshow(decoded_example_reshaped)
 
 
 n = 20  # generate 15x15 digits
-figure = np.zeros((img_width * n, img_height * n, num_channels))
+figure = np.zeros((img_width * n, img_height * n, n_channels))
 
 #Create a Grid of latent variables, to be provided as inputs to decoder.predict
 #Creating vectors within range -5 to 5 as that seems to be the range in latent space
@@ -198,7 +208,7 @@ for i, yi in enumerate(grid_y):
     for j, xi in enumerate(grid_x):
         z_sample = np.array([[xi, yi]])
         x_decoded = decoder.predict(z_sample)
-        digit = x_decoded[0].reshape(img_width, img_height, num_channels)
+        digit = x_decoded[0].reshape(img_width, img_height, n_channels)
         figure[i * img_width: (i + 1) * img_width,
                j * img_height: (j + 1) * img_height] = digit
 

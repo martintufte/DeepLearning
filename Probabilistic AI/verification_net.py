@@ -12,8 +12,8 @@ from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2
 import numpy as np
 
 
-class VerificationNet:
 
+class VerificationNet:
     def __init__(self, force_learn: bool = False, file_name: str = "./models/verification_model") -> None:
         """
         Define model and set some parameters.
@@ -22,7 +22,8 @@ class VerificationNet:
         """
         self.force_relearn = force_learn
         self.file_name = file_name
-
+        
+        # The verification classifier
         model = Sequential()
         model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1)))
         for _ in range(3):
@@ -42,6 +43,7 @@ class VerificationNet:
         self.model = model
         self.done_training = self.load_weights()
 
+
     def load_weights(self):
         # noinspection PyBroadException
         try:
@@ -54,6 +56,7 @@ class VerificationNet:
             done_training = False
 
         return done_training
+
 
     def train(self, generator: StackedMNISTData, epochs: np.int = 10) -> bool:
         """
@@ -82,6 +85,7 @@ class VerificationNet:
             self.done_training = True
 
         return self.done_training
+
 
     def predict(self, data: np.ndarray) -> tuple:
         """
@@ -112,6 +116,7 @@ class VerificationNet:
 
         return predictions, beliefs
 
+
     def check_class_coverage(self, data: np.ndarray, tolerance: np.float = .8) -> np.float:
         """
         Out of the total number of classes that can be generated, how many are in the data-set?
@@ -127,6 +132,7 @@ class VerificationNet:
         # Coverage: Fraction of possible classes that were seen
         coverage = float(len(np.unique(predictions))) / no_classes_available
         return coverage
+
 
     def check_predictability(self, data: np.ndarray,
                              correct_labels: list = None,
@@ -157,9 +163,9 @@ class VerificationNet:
 
 
 if __name__ == "__main__":
-    gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
-    net = VerificationNet(force_learn=False)
-    net.train(generator=gen, epochs=5)
+    #gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
+    #net = VerificationNet(force_learn=False)
+    #net.train(generator=gen, epochs=5)
 
     # I have no data generator (VAE or whatever) here, so just use a sampled set
     img, labels = gen.get_random_batch(training=True,  batch_size=25000)
