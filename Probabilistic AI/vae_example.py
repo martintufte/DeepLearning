@@ -2,7 +2,7 @@
 """
 Created on Thu Feb 24 16:41:13 2022
 
-@author: Teksle
+@author: martigtu@stud.ntnu.no
 """
 
 #from stacked_mnist import StackedMNISTData, DataMode

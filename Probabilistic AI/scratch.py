@@ -2,7 +2,7 @@
 """
 Created on Thu Mar  3 13:00:53 2022
 
-@author: Teksle
+@author: martigtu@stud.ntnu.no
 """
 
 import numpy as np

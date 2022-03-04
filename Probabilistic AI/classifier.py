@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Feb 24 12:48:42 2022
+Created on Fri Mar  4 08:36:19 2022
 
 @author: martigtu@stud.ntnu.no
 """
 
 from stacked_mnist import StackedMNISTData, DataMode
 from tensorflow import keras
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D
 import numpy as np
 
 
 
 class VerificationNet:
-    def __init__(self, force_learn: bool = False, file_name: str = "./models/verification_model") -> None:
+    def __init__(self, force_learn: bool = False, file_name: str = "./models/classifier_model") -> None:
         """
         Define model and set some parameters.
         The model is  made for classifying one channel only -- if we are looking at a
@@ -24,21 +24,26 @@ class VerificationNet:
         self.file_name = file_name
         
         # The verification classifier
-        model = Sequential()
-        model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1)))
-        for _ in range(3):
-            model.add(Conv2D(64, (3, 3), activation='relu'))
-            model.add(MaxPooling2D(pool_size=(2, 2)))
-            model.add(Dropout(0.25))
+        input_layer = Input(shape=(28, 28, 1))
+        
+        # Convolution part of encoder network
+        # Each succsesive convolution layer reduces the height/width by 4
+        x = Conv2D(32, kernel_size=(5, 5), activation='relu')(input_layer)
+        x = Conv2D(64, kernel_size=(5, 5), activation='relu')(x)
+        x = Conv2D(96, kernel_size=(5, 5), activation='relu')(x)
+        x = Conv2D(128, kernel_size=(5, 5), activation='relu')(x)
+        x = Conv2D(160, kernel_size=(5, 5), activation='relu')(x)
 
-        model.add(Flatten())
-        model.add(Dense(128, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(10, activation='softmax'))
-
-        model.compile(loss=keras.losses.categorical_crossentropy,
-                      optimizer=keras.optimizers.Adam(lr=.01),
-                      metrics=['accuracy'])
+        # Flatten the input and softmax into the 10 categories
+        x = Flatten()(x)
+        x = Dense(128, activation='relu')(x)
+        output_layer = Dense(10, activation='softmax')(x)
+        
+        # Compile the model
+        model = Model(input_layer, output_layer).compile(
+            loss = keras.losses.categorical_crossentropy,
+            optimizer = keras.optimizers.Adam(lr=.01),
+            metrics = ['accuracy'])
 
         self.model = model
         self.done_training = self.load_weights()
@@ -163,9 +168,9 @@ class VerificationNet:
 
 
 if __name__ == "__main__":
-    #gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
-    #net = VerificationNet(force_learn=False)
-    #net.train(generator=gen, epochs=5)
+    gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
+    net = VerificationNet(force_learn=False)
+    net.train(generator=gen, epochs=5)
 
     # I have no data generator (VAE or whatever) here, so just use a sampled set
     img, labels = gen.get_random_batch(training=True,  batch_size=25000)

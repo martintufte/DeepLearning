@@ -2,7 +2,7 @@
 """
 Created on Tue Mar  1 14:38:00 2022
 
-@author: Teksle
+@author: martigtu@stud.ntnu.no
 """
 
 # Basic libraries
