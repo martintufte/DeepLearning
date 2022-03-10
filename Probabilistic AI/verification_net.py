@@ -7,14 +7,14 @@ Created on Thu Feb 24 12:48:42 2022
 
 from stacked_mnist import StackedMNISTData, DataMode
 from tensorflow import keras
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Dense, Dropout, Flatten, Conv2D, MaxPooling2D
 import numpy as np
 
 
 
 class VerificationNet:
-    def __init__(self, force_learn: bool = False, file_name: str = "./models/verification_model") -> None:
+    def __init__(self, force_learn: bool = False, file_name: str = "./models/verification3_model") -> None:
         """
         Define model and set some parameters.
         The model is  made for classifying one channel only -- if we are looking at a
@@ -22,6 +22,36 @@ class VerificationNet:
         """
         self.force_relearn = force_learn
         self.file_name = file_name
+        
+        # The verification classifier
+        input_layer = Input(shape=(28, 28, 1))
+        
+        # Convolution part of encoder network
+        # Each succsesive convolution layer reduces the height/width by 4
+        # In this way the image reduces from (28 x 28) to (12 x 12)
+        # The result is flattened, and a dense layer maps to the outputs.
+        x = Conv2D(32, kernel_size=(5, 5), padding='valid', activation='relu')(input_layer)
+        x = Conv2D(64, kernel_size=(5, 5), padding='valid', activation='relu')(x)
+        x = Conv2D(96, kernel_size=(5, 5), padding='valid', activation='relu')(x)
+        x = Conv2D(128, kernel_size=(5, 5), padding='valid', activation='relu')(x)
+
+        # Flatten the input and softmax into the 10 categories
+        x = Flatten()(x)
+        #x = Dense(128, activation='relu')(x)
+        output_layer = Dense(10, activation='softmax')(x)
+        
+        # Compile the model
+        model = Model(input_layer, output_layer)
+        model.compile(
+            loss = keras.losses.categorical_crossentropy,
+            optimizer = keras.optimizers.Adam(learning_rate=.001),
+            metrics = ['accuracy'])
+        
+        # Model summary
+        model.summary()
+        
+        '''
+        ### ARCHITECTURE PROVIDED IN THE ORIGINAL FILE
         
         # The verification classifier
         model = Sequential()
@@ -39,10 +69,10 @@ class VerificationNet:
         model.compile(loss=keras.losses.categorical_crossentropy,
                       optimizer=keras.optimizers.Adam(lr=.01),
                       metrics=['accuracy'])
+        '''
 
         self.model = model
         self.done_training = self.load_weights()
-
 
     def load_weights(self):
         # noinspection PyBroadException
@@ -52,13 +82,13 @@ class VerificationNet:
             done_training = True
 
         except:
-            print(f"Could not read weights for verification_net from file. Must retrain...")
+            print("Could not read weights for verification_net from file. Must retrain...")
             done_training = False
 
         return done_training
 
 
-    def train(self, generator: StackedMNISTData, epochs: np.int = 10) -> bool:
+    def train(self, generator: StackedMNISTData, epochs: int = 10) -> bool:
         """
         Train model if required. As we have a one-channel model we take care to
         only use the first channel of the data.
@@ -72,9 +102,9 @@ class VerificationNet:
 
             # "Translate": Only look at "red" channel; only use the last digit. Use one-hot for labels during training
             x_train = x_train[:, :, :, [0]]
-            y_train = keras.utils.to_categorical((y_train % 10).astype(np.int), 10)
+            y_train = keras.utils.to_categorical((y_train % 10).astype(int), 10)
             x_test = x_test[:, :, :, [0]]
-            y_test = keras.utils.to_categorical((y_test % 10).astype(np.int), 10)
+            y_test = keras.utils.to_categorical((y_test % 10).astype(int), 10)
 
             # Fit model
             self.model.fit(x=x_train, y=y_train, batch_size=1024, epochs=epochs,
@@ -117,7 +147,7 @@ class VerificationNet:
         return predictions, beliefs
 
 
-    def check_class_coverage(self, data: np.ndarray, tolerance: np.float = .8) -> np.float:
+    def check_class_coverage(self, data: np.ndarray, tolerance: float = .8) -> float:
         """
         Out of the total number of classes that can be generated, how many are in the data-set?
         I'll only could samples for which the network asserts there is at least tolerance probability
@@ -136,7 +166,7 @@ class VerificationNet:
 
     def check_predictability(self, data: np.ndarray,
                              correct_labels: list = None,
-                             tolerance: np.float = .8) -> tuple:
+                             tolerance: float = .8) -> tuple:
         """
         Out of the number of data points retrieved, how many are we able to make predictions about?
         ... and do we guess right??
@@ -145,8 +175,8 @@ class VerificationNet:
         - data samples -- size (N, 28, 28, color-channels)
         - correct labels -- if we have them. List of N integers
         - tolerance: Minimum level of "confidence" for us to make a guess
-
         """
+        
         # Get predictions; only keep those where all channels were "confident enough"
         predictions, beliefs = self.predict(data=data)
         predictions = predictions[beliefs >= tolerance]
@@ -163,9 +193,9 @@ class VerificationNet:
 
 
 if __name__ == "__main__":
-    #gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
-    #net = VerificationNet(force_learn=False)
-    #net.train(generator=gen, epochs=5)
+    gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
+    net = VerificationNet(force_learn=False)
+    net.train(generator=gen, epochs=5)
 
     # I have no data generator (VAE or whatever) here, so just use a sampled set
     img, labels = gen.get_random_batch(training=True,  batch_size=25000)
