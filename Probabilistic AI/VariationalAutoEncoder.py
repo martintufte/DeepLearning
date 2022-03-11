@@ -6,9 +6,6 @@ Created on Tue Mar  8 11:16:57 2022
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-import tqdm as tqdm
-import pandas as pd
 
 # Data generator
 from stacked_mnist import StackedMNISTData, DataMode
@@ -17,14 +14,16 @@ from stacked_mnist import StackedMNISTData, DataMode
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, InputLayer, Dense, Flatten, Conv2D, Conv2DTranspose, Lambda, Reshape
+from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, Conv2DTranspose, Lambda, Reshape
 
 # Own stuff
-from functions import visualize, visualize_encoding, visualize_grid
+from functions import visualize, visualize_encoding, visualize_decoding
 
 
-class VAE:
-    def __init__(self, latent_dim = 2, force_learn = False, file_name = "vae"):
+
+
+class VariationalAutoEncoder:
+    def __init__(self, latent_dim = 2, force_learn = False, file_name = "VariationalAutoEncoder"):
         '''
         The model is a convolutional variational auto encoder (VAE) used on the
         MNIST handwritten digits data set. It encodes the images in a latent
@@ -34,7 +33,9 @@ class VAE:
         self.done_training = False
         self.file_name = "./models/"+file_name
         self.latent_dim = latent_dim
-        input_shape = (28, 28, 1) # height, width, n_channels
+        self.n_channels = 1
+        
+        input_shape = (28, 28, self.n_channels) # height, width, n_channels
         
         
         ### ENCODER
@@ -166,17 +167,25 @@ class VAE:
             self.model.save_weights(filepath=self.file_name)
             self.done_training = True
     
-    
         
     def encode(self, x):
         mu, _, _ = self.encoder(x)
         return mu
     
     
-    
     def decode(self, z):
-        return self.decoder(z)
-    
+        '''
+        Decode the latent representation.
+        shape is assumed to be (n_samples, latent_dim)
+        or (n_samples, latent_dim, n_channels)
+        '''
+        # Monochrome
+        if z.ndim==2: 
+            return self.decoder(z)
+        # RGB
+        else:
+            n_channels = z.shape[-1]
+            return tf.concat( [self.decode(z[:,:,ch]) for ch in range(n_channels)], axis=-1 )
     
     
     def predict(self, x):
@@ -191,22 +200,29 @@ class VAE:
             return tf.concat( [self.predict(x[:,:,:,[ch]]) for ch in range(n_channels)], axis=-1 )
         
         # Monochrome
-        return self.decode(self.encode(x))
+        return np.array( self.decode(self.encode(x)) )
         
     
     
         
 if __name__=="__main__":
+    # Train the Autoencoder on full dataset
     gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE)
-    net = VAE(latent_dim=2, force_learn=False, file_name = "vae6")
-    net.fit(generator=gen, batch_size=256, epochs=1)
+    net = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name = "VariationalAutoEncoder")
+    net.fit(generator=gen, batch_size=256, epochs=10)
     
+    # Train the Autoencoder on missing dataset
+    gen2 = StackedMNISTData(mode=DataMode.MONO_BINARY_MISSING)
+    net2 = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name = "VariationalAutoEncoder_missing")
+    net2.fit(generator=gen2, batch_size=256, epochs=10)
+    
+    # Visualization
     x_test, y_test = gen.get_full_data_set(training=False)
     x_test_recon = net.predict(x_test)
     visualize(x_test, x_test_recon)
     
-    #visualize_grid(net, N=20, x_range=(-3,3), y_range=(-3,3))
-    #visualize(x = x_test, x_ref = x_test_recon)
-    #visualize_encoding(net, x_test, y_test)
+    visualize_decoding(net, N=20, x_range=(-10,10), y_range=(-10,10))
+    visualize(x = x_test, x_ref = x_test_recon)
+    visualize_encoding(net, x_test, y_test)
     
 

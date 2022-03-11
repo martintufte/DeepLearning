@@ -1,0 +1,2 @@
+model_checkpoint_path: "AutoEncoder_stacked"
+all_model_checkpoint_paths: "AutoEncoder_stacked"

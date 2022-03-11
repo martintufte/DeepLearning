@@ -7,21 +7,21 @@ Created on Thu Feb 24 12:48:42 2022
 
 from stacked_mnist import StackedMNISTData, DataMode
 from tensorflow import keras
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Input, Dense, Dropout, Flatten, Conv2D, MaxPooling2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D
 import numpy as np
 
 
 
 class VerificationNet:
-    def __init__(self, force_learn: bool = False, file_name: str = "./models/verification3_model") -> None:
+    def __init__(self, force_learn: bool = False, file_name: str = "Verification_model") -> None:
         """
         Define model and set some parameters.
         The model is  made for classifying one channel only -- if we are looking at a
         more-channel image we will simply do the thing one-channel-at-the-time.
         """
         self.force_relearn = force_learn
-        self.file_name = file_name
+        self.file_name = "./models/"+file_name
         
         # The verification classifier
         input_layer = Input(shape=(28, 28, 1))
@@ -194,7 +194,7 @@ class VerificationNet:
 
 if __name__ == "__main__":
     gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
-    net = VerificationNet(force_learn=False)
+    net = VerificationNet(force_learn=False, file_name="Verification_model")
     net.train(generator=gen, epochs=5)
 
     # I have no data generator (VAE or whatever) here, so just use a sampled set

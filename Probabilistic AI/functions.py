@@ -12,6 +12,8 @@ import tensorflow as tf
 
 
 
+### CONVERT BETWEEN COLOR AND MONOCHROMATIC IMAGES
+
 def color_to_mono(x):
     '''
     Flatten x from shape (n_samples, height, width, n_channels)
@@ -37,7 +39,9 @@ def mono_to_color(x, n_channels=3):
 
 
 
-def visualize(x, x_ref=False, N=10, random=True):
+### VISUALIZATION FUNCTIONS
+
+def visualize(x, x_ref="None", N=10, random=True):
     '''
     Display random imgs from x (upper) and y (lower).
     x (n_samples, height, width, n_channels)
@@ -59,7 +63,7 @@ def visualize(x, x_ref=False, N=10, random=True):
     
     # Monochrome imgs
     if n_channels == 1:
-        if isinstance(y, type(None)):
+        if y == "None":
             fig, axs = plt.subplots(1, N, figsize=(N, 1))
             for i in range(N):
                 axs.flat[i].imshow(x[p[i]].squeeze(), cmap='gray_r')
@@ -68,15 +72,15 @@ def visualize(x, x_ref=False, N=10, random=True):
         else:
             fig, axs = plt.subplots(2, N, figsize=(N, 2))
             for i in range(N):
-                axs.flat[i].imshow(x[p[i]], cmap='gray_r')
+                axs.flat[i].imshow(x[p[i]].squeeze(), cmap='gray_r')
                 axs.flat[i].axis('off')
                 
-                axs.flat[i+N].imshow(y[p[i]], cmap='gray_r')
+                axs.flat[i+N].imshow(y[p[i]].squeeze(), cmap='gray_r')
                 axs.flat[i+N].axis('off')
             plt.show()
     # RGB imgs
     elif n_channels == 3:
-        if isinstance(y, type(None)): 
+        if y == "None": 
             fig, axs = plt.subplots(1, N, figsize=(N, 1))
             for i in range(N):
                 axs.flat[i].imshow(x[p[i]].astype(float))
@@ -96,9 +100,13 @@ def visualize(x, x_ref=False, N=10, random=True):
             
 
 
-def visualize_encoding(vae, x, y):
+def visualize_encoding(vae, x, y, is_AE=False):
     ''' Visualize the first two dimentions of the latent space. '''
-    mu, _, _ = vae.encoder(x)
+    if is_AE:
+        mu = vae.encoder(x)
+    else:
+        mu, _, _ = vae.encoder(x)
+    
     df = pd.DataFrame({'dim1': mu[:,0], 'dim2': mu[:,1], 'label': y})
     groups = df.groupby('label')
     
@@ -134,7 +142,7 @@ def visualize_encoding(vae, x, y):
 
 
 
-def visualize_grid(vae, N=20, x_range=(-3,3), y_range=(-3,3)):
+def visualize_decoding(vae, N=20, x_range=(-3,3), y_range=(-3,3)):
     ''' Visualize a 2D grid of the decodings from the latent space. '''
     height = 28
     width = 28
@@ -159,6 +167,29 @@ def visualize_grid(vae, N=20, x_range=(-3,3), y_range=(-3,3)):
     plt.imshow(grid, cmap='gray_r')
     plt.axis('off')
     plt.show()
+
+
+
+### QUANTITIVE MEASURES FOR THE EVALUATION OF THE GENERATIVE MODELS
+
+def find_top_anomalies(x_true, x_pred, k=10):
+    ''' Find the indecies for the top k anomalies using the reconstruction loss. '''
+    
+    recon_loss = tf.reduce_mean( tf.keras.metrics.binary_crossentropy(x_true, x_pred), axis=(1,2) )
+    recon_loss = np.array(recon_loss)
+    idecies = np.argpartition(recon_loss, -k)[-k:]
+    return list(idecies)
+
+    #print('Succsess!!')
+
+
+
+
+
+
+
+
+
 
 
 
