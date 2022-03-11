@@ -26,10 +26,16 @@ class VerificationNet:
         # The verification classifier
         input_layer = Input(shape=(28, 28, 1))
         
-        # Convolution part of encoder network
-        # Each succsesive convolution layer reduces the height/width by 4
-        # In this way the image reduces from (28 x 28) to (12 x 12)
-        # The result is flattened, and a dense layer maps to the outputs.
+        ### Convolution part of encoder network
+        #
+        # 1. Kernel size of 5 is used throughout with 'valid' padding and relu
+        # 2. No strides are used, and there are no Pooling layers
+        # 3. The number of channels are increased furter down stream to capture
+        #    complicated features of the input image.
+        # 4. Each succsesive convolution layer reduces the height/width by 4.
+        #    In this way the image reduces from (28 x 28) to (12 x 12).
+        #    The result is flattened, and a dense layer maps to the outputs.
+        
         x = Conv2D(32, kernel_size=(5, 5), padding='valid', activation='relu')(input_layer)
         x = Conv2D(64, kernel_size=(5, 5), padding='valid', activation='relu')(x)
         x = Conv2D(96, kernel_size=(5, 5), padding='valid', activation='relu')(x)
@@ -73,6 +79,7 @@ class VerificationNet:
 
         self.model = model
         self.done_training = self.load_weights()
+
 
     def load_weights(self):
         # noinspection PyBroadException
@@ -197,7 +204,6 @@ if __name__ == "__main__":
     net = VerificationNet(force_learn=False, file_name="Verification_model")
     net.train(generator=gen, epochs=5)
 
-    # I have no data generator (VAE or whatever) here, so just use a sampled set
     img, labels = gen.get_random_batch(training=True,  batch_size=25000)
     cov = net.check_class_coverage(data=img, tolerance=.98)
     pred, acc = net.check_predictability(data=img, correct_labels=labels)

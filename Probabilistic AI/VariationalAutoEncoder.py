@@ -10,15 +10,15 @@ import numpy as np
 # Data generator
 from stacked_mnist import StackedMNISTData, DataMode
 
-# Tensorflow stuff
+# Import tensorflow
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, Conv2DTranspose, Lambda, Reshape
+from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, Lambda, \
+    Conv2DTranspose, Reshape
 
-# Own stuff
-from functions import visualize, visualize_encoding, visualize_decoding
-
+from functions import visualize, visualize_encoding, visualize_decoding, \
+    color_to_mono, mono_to_color
 
 
 
@@ -31,11 +31,10 @@ class VariationalAutoEncoder:
         '''
         self.force_relearn = force_learn
         self.done_training = False
-        self.file_name = "./models/"+file_name
+        self.file_name = "./models/" + file_name
         self.latent_dim = latent_dim
-        self.n_channels = 1
         
-        input_shape = (28, 28, self.n_channels) # height, width, n_channels
+        input_shape = (28, 28, 1) # height, width, n_channels
         
         
         ### ENCODER
@@ -71,7 +70,7 @@ class VariationalAutoEncoder:
         
         ### Calculating the negative ELBO as the loss function
         '''
-        Specifically made for the VAE class.
+        Notes: This is specifically made for the VAE class.
         
         Custom loss function for the variational autoencoder. It implements the
         negative weighted Evidence lower bound (ELBO) as the loss function for the 
@@ -104,11 +103,10 @@ class VariationalAutoEncoder:
         
         - Since the decoder network uses the logit activation function, the
           reconstruction loss can be calculated using the binary crossentropy. The
-          expectation is calculated using Monte Carlo with 1 sample.
+          expectation is calculated using Monte Carlo estimation with 1 sample.
         '''
         # Kullback Leibler loss (analytic solution when the prior is N(0,1))
         kl_loss = -0.5 * tf.reduce_mean(1 + z_log_var - tf.exp(z_log_var) - tf.square(z_mean), axis=(-1))
-        beta=1e-2
         
         # Reconstruction loss using binary crossentropy
         recon_loss = tf.reduce_mean(tf.keras.metrics.binary_crossentropy(encoder_input, x_recon), axis=(1,2))
@@ -117,10 +115,10 @@ class VariationalAutoEncoder:
         ### VAE
         #model_outputs = (x_recon, z_mean, z_log_var)
         self.model = Model(encoder_input, x_recon, name='VAE')
-        self.model.add_loss(beta*kl_loss + recon_loss)
+        self.model.add_loss(0.01*kl_loss + recon_loss)
         self.model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3), metrics = ['accuracy'] )
         
-        # Try reading the weights from file if force_relearn is False
+        # Try reading the weights from file
         self.done_training = self.load_weights()
         
         
@@ -156,8 +154,11 @@ class VariationalAutoEncoder:
             x_train, _ = generator.get_full_data_set(training=True)
             x_test, _ = generator.get_full_data_set(training=False)
             
-            # "Translate": Only look at "red" channel; only use the last digit.s
-            x_train = x_train[:, :, :, [0]]
+            # Adapting to 3 channels
+            n_channels = x_train.shape[-1]
+            if n_channels > 1:
+                x_train = color_to_mono(x_train)
+                x_test = color_to_mono(x_test)
 
             # Fit model
             self.model.fit(x=x_train, y=x_train, batch_size=batch_size, epochs=epochs,
@@ -197,32 +198,24 @@ class VariationalAutoEncoder:
         
         # RGB
         if n_channels > 1:
-            return tf.concat( [self.predict(x[:,:,:,[ch]]) for ch in range(n_channels)], axis=-1 )
-        
+            return np.array( tf.concat( [self.predict(x[:,:,:,[ch]]) for ch in range(n_channels)], axis=-1 ) )
         # Monochrome
         return np.array( self.decode(self.encode(x)) )
         
-    
     
         
 if __name__=="__main__":
     # Train the Autoencoder on full dataset
     gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE)
-    net = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name = "VariationalAutoEncoder")
+    net = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name = "VariationalAE")
     net.fit(generator=gen, batch_size=256, epochs=10)
-    
-    # Train the Autoencoder on missing dataset
-    gen2 = StackedMNISTData(mode=DataMode.MONO_BINARY_MISSING)
-    net2 = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name = "VariationalAutoEncoder_missing")
-    net2.fit(generator=gen2, batch_size=256, epochs=10)
     
     # Visualization
     x_test, y_test = gen.get_full_data_set(training=False)
     x_test_recon = net.predict(x_test)
     visualize(x_test, x_test_recon)
     
-    visualize_decoding(net, N=20, x_range=(-10,10), y_range=(-10,10))
-    visualize(x = x_test, x_ref = x_test_recon)
-    visualize_encoding(net, x_test, y_test)
+    #visualize_decoding(net, N=20, x_range=(-10,10), y_range=(-10,10))
+    #visualize(x = x_test, x_ref = x_test_recon)
+    #visualize_encoding(net, x_test, y_test)
     
-

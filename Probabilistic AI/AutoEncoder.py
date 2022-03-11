@@ -10,14 +10,15 @@ import numpy as np
 # Data generator
 from stacked_mnist import StackedMNISTData, DataMode
 
-# Tensorflow stuff
+# Import tensorflow
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, Conv2DTranspose, Reshape
+from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, \ 
+    Conv2DTranspose, Reshape
 
-# Own stuff
-from functions import visualize, visualize_encoding, visualize_decoding, color_to_mono, mono_to_color
+from functions import visualize, visualize_encoding, visualize_decoding, \ 
+    color_to_mono, mono_to_color
 
 
 
@@ -30,11 +31,10 @@ class AutoEncoder:
         '''
         self.force_relearn = force_learn
         self.done_training = False
-        self.file_name = "./models/"+file_name
+        self.file_name = "./models/" + file_name
         self.latent_dim = latent_dim
-        self.n_channels = 1
         
-        input_shape = (28, 28, self.n_channels) # height, width, n_channels
+        input_shape = (28, 28, 1) # height, width, n_channels
         
         
         ### ENCODER
@@ -42,7 +42,7 @@ class AutoEncoder:
         x = Conv2D(32, kernel_size=(5, 5), padding='valid', activation='relu')(encoder_input)
         x = Conv2D(64, kernel_size=(5, 5), padding='valid', activation='relu')(x)
         x = Conv2D(96, kernel_size=(5, 5), padding='valid', activation='relu')(x)
-        conv_shape = (16, 16, 96) # shape of x
+        conv_shape = (16, 16, 96) # shape of x before flatten Layer
         x = Flatten()(x)
         # Encode the  input
         encoder_output = Dense(latent_dim, name="latent_representation")(x)
@@ -51,11 +51,11 @@ class AutoEncoder:
 
         ### DECODER
         decoder_input = Input( shape=(self.latent_dim,) )
-        x = Dense(np.prod(conv_shape), activation='relu')(decoder_input) # shape (height*width*n_channels)
+        x = Dense(np.prod(conv_shape), activation='relu')(decoder_input) # shape (height * width * n_channels)
         x = Reshape(target_shape=(conv_shape[0], conv_shape[1], conv_shape[2]))(x) # shape (height, width, n_channels)
         x = Conv2DTranspose(64, kernel_size=(5,5), padding='valid', activation='relu')(x)
         x = Conv2DTranspose(32, kernel_size=(5,5), padding='valid', activation='relu')(x)
-        # sigmoid activation to get predictions for each pixel
+        # Sigmoid activation to get predictions for each pixel
         decoder_output = Conv2DTranspose(1, kernel_size=(5,5), padding='valid', activation='sigmoid', name="x_recon")(x)
         self.decoder = Model(decoder_input, decoder_output, name='Decoder')
         # Decode the output from the encoder
@@ -67,7 +67,7 @@ class AutoEncoder:
                            optimizer=keras.optimizers.Adam(learning_rate=1e-3),
                            metrics = ['accuracy'] )
         
-        # Try reading the weights from file if force_relearn is False
+        # Try reading the weights from file
         self.done_training = self.load_weights()
         
     
@@ -160,4 +160,3 @@ if __name__=="__main__":
     #visualize(x = x_test, x_ref = x_test_recon)
     #visualize_encoding(net, x_test, y_test, is_AE=True)
     
-

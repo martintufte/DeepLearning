@@ -243,8 +243,7 @@ class StackedMNISTData:
                 plt.imshow(images[img_idx, :, :, :].astype(np.float))
             plt.xticks([])
             plt.yticks([])
-            # comment out this for enviorment tf-gpu
-            #plt.title(f"Class is {str(labels[img_idx]).zfill(self.channels)}")
+            plt.title(f"Class is {str(labels[img_idx]).zfill(self.channels)}")
 
         # Show the thing ...
         plt.show()
@@ -253,11 +252,10 @@ class StackedMNISTData:
 
 
 if __name__=="__main__":
-    pass
-    #gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_MISSING, default_batch_size=2048)
+    gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_MISSING, default_batch_size=2048)
     
-    #img, cls = gen.get_random_batch(batch_size=20)
-    #gen.plot_example(images=img, labels=cls)
+    img, cls = gen.get_random_batch(batch_size=20)
+    gen.plot_example(images=img, labels=cls)
 
-    #for (img, cls) in gen.batch_generator(training=False, batch_size=2048):
-    #    print(f"Batch has size: Images: {img.shape}; Labels {cls.shape}")
+    for (img, cls) in gen.batch_generator(training=False, batch_size=2048):
+        print(f"Batch has size: Images: {img.shape}; Labels {cls.shape}")

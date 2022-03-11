@@ -22,7 +22,7 @@ def color_to_mono(x):
     '''
     n_channels = x.shape[-1]
     
-    return tf.concat( [x[:,:,:, [ch]] for ch in range(n_channels)], axis=0 )
+    return tf.concat( [x[:,:,:,[ch]] for ch in range(n_channels)], axis=0 )
     
 
 
@@ -41,7 +41,7 @@ def mono_to_color(x, n_channels=3):
 
 ### VISUALIZATION FUNCTIONS
 
-def visualize(x, x_ref="None", N=10, random=True):
+def visualize(x, x_ref='None', N=10, random=True):
     '''
     Display random imgs from x (upper) and y (lower).
     x (n_samples, height, width, n_channels)
@@ -63,7 +63,7 @@ def visualize(x, x_ref="None", N=10, random=True):
     
     # Monochrome imgs
     if n_channels == 1:
-        if y == "None":
+        if y == 'None':
             fig, axs = plt.subplots(1, N, figsize=(N, 1))
             for i in range(N):
                 axs.flat[i].imshow(x[p[i]].squeeze(), cmap='gray_r')
@@ -80,7 +80,7 @@ def visualize(x, x_ref="None", N=10, random=True):
             plt.show()
     # RGB imgs
     elif n_channels == 3:
-        if y == "None": 
+        if y == 'None': 
             fig, axs = plt.subplots(1, N, figsize=(N, 1))
             for i in range(N):
                 axs.flat[i].imshow(x[p[i]].astype(float))
@@ -96,7 +96,7 @@ def visualize(x, x_ref="None", N=10, random=True):
                 axs.flat[i+N].axis('off')
             plt.show()
     else:
-        print("Number of channels is not in (1, 3), plotting not supported.")
+        print('Number of channels is not in (1, 3), plotting not supported.')
             
 
 
@@ -129,7 +129,6 @@ def visualize_encoding(vae, x, y, is_AE=False):
             event.inaxes.set_ylim([min2-1, max2+1])
             event.canvas.draw()
             
-
     # Plot dim1 and dim2 for mu
     plt.connect('button_press_event', on_click)
     plt.axis('equal')
@@ -144,11 +143,9 @@ def visualize_encoding(vae, x, y, is_AE=False):
 
 def visualize_decoding(vae, N=20, x_range=(-3,3), y_range=(-3,3)):
     ''' Visualize a 2D grid of the decodings from the latent space. '''
-    height = 28
-    width = 28
     
     # Initialize an empty grid
-    grid = np.zeros((N*width, N*height, 1))
+    grid = np.zeros((N*28, N*28, 1))
     
     # Grid components
     grid_x = np.linspace(x_range[0], x_range[1], N)
@@ -161,7 +158,7 @@ def visualize_decoding(vae, N=20, x_range=(-3,3), y_range=(-3,3)):
             # get the decoded image, reshape it
             z_decoded = np.array(vae.decoder(z_sample)).reshape(28,28, 1)
             # insert decoded image into the grid
-            grid[i*width:(i+1)*width, j*height:(j+1)*height] = z_decoded
+            grid[i*28:(i+1)*28, j*28:(j+1)*28] = z_decoded
     
     plt.axis('equal')
     plt.imshow(grid, cmap='gray_r')
@@ -170,35 +167,16 @@ def visualize_decoding(vae, N=20, x_range=(-3,3), y_range=(-3,3)):
 
 
 
-### QUANTITIVE MEASURES FOR THE EVALUATION OF THE GENERATIVE MODELS
+### EVALUATION OF THE GENERATIVE MODELS
 
 def find_top_anomalies(x_true, x_pred, k=10):
     ''' Find the indecies for the top k anomalies using the reconstruction loss. '''
     
+    # Use the binary crossentropy as reconstruction loss
     recon_loss = tf.reduce_mean( tf.keras.metrics.binary_crossentropy(x_true, x_pred), axis=(1,2) )
     recon_loss = np.array(recon_loss)
+    
+    # Indecies for the images with the highest anomalies
     idecies = np.argpartition(recon_loss, -k)[-k:]
+    
     return list(idecies)
-
-    #print('Succsess!!')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
