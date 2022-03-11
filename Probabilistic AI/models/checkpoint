@@ -1,2 +1,2 @@
-model_checkpoint_path: "VariationalAE_missing"
-all_model_checkpoint_paths: "VariationalAE_missing"
+model_checkpoint_path: "VariationalAE_stacked"
+all_model_checkpoint_paths: "VariationalAE_stacked"

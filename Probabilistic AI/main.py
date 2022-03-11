@@ -70,8 +70,9 @@ if __name__=="__main__":
     
     
     # [AE-STACK]
+    # Basic
     AE = AutoEncoder(latent_dim=2, force_learn=False, file_name="AutoEncoder_stacked")
-    AE.fit(generator=stackedMNIST, batch_size=256, epochs=3)
+    AE.fit(generator=stackedMNIST, batch_size=256, epochs=4)
     # Try on the test data
     sx_test, sy_test = stackedMNIST.get_full_data_set(training=False)
     sx_test_recon = AE.predict(sx_test)
@@ -110,7 +111,7 @@ if __name__=="__main__":
     # Visualize reconstruction results, latent encoding and decoding
     visualize(x_test, x_test_recon, N=12)
     visualize_encoding(VAE, x_test, y_test, is_AE=False)
-    visualize_decoding(VAE, N=20, x_range=(-3,3), y_range=(-3,3))
+    visualize_decoding(VAE, N=20, x_range=(-2.5,2.5), y_range=(-2.5,2.5))
     
     
     ## [VAE-GEN]
@@ -129,8 +130,8 @@ if __name__=="__main__":
     
     
     ## [VAE-ANOM]
-    anom_VAE = VariationalAutoEncoder(latent_dim=2, force_learn=True, file_name = "VariationalAE_missing")
-    anom_VAE.fit(generator=MNIST_anom, batch_size=256, epochs=10)
+    anom_VAE = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name = "VariationalAE_missing")
+    anom_VAE.fit(generator=MNIST_anom, batch_size=512, epochs=5)
     # Plot the top anomalies from the test set
     anom_x_test_recon = anom_VAE.predict(x_test)
     indecies = find_top_anomalies(x_test, anom_x_test_recon, k=12)
@@ -138,8 +139,8 @@ if __name__=="__main__":
     
     
     ## [VAE-STACK]
-    VAE = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name="VariationalAE")#_stacked")
-    VAE.fit(generator=stackedMNIST, batch_size=256, epochs=3)
+    VAE = VariationalAutoEncoder(latent_dim=2, force_learn=False, file_name="VariationalAE_stacked")
+    VAE.fit(generator=stackedMNIST, batch_size=256, epochs=4)
     # Try on the test data
     sx_test, sy_test = stackedMNIST.get_full_data_set(training=False)
     sx_test_recon = VAE.predict(sx_test)
