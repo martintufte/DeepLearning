@@ -180,3 +180,6 @@ def find_top_anomalies(x_true, x_pred, k=10):
     idecies = np.argpartition(recon_loss, -k)[-k:]
     
     return list(idecies)
+
+
+

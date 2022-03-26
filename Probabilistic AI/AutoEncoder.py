@@ -14,10 +14,10 @@ from stacked_mnist import StackedMNISTData, DataMode
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, \ 
+from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, \
     Conv2DTranspose, Reshape
 
-from functions import visualize, visualize_encoding, visualize_decoding, \ 
+from functions import visualize, visualize_encoding, visualize_decoding, \
     color_to_mono, mono_to_color
 
 

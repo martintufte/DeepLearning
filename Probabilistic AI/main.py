@@ -11,8 +11,7 @@ from stacked_mnist import StackedMNISTData, DataMode
 from verification_net import VerificationNet
 from AutoEncoder import AutoEncoder
 from VariationalAutoEncoder import VariationalAutoEncoder
-from functions import visualize, visualize_encoding, visualize_decoding, \
-    find_top_anomalies
+from functions import visualize, visualize_encoding, visualize_decoding, find_top_anomalies
 
 
 
