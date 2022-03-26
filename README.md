@@ -6,7 +6,7 @@ First project in IT3030. This project implements the backpropagation algorithm f
 The data generator included creates binary images of arrows pointing up, left, right or down.
 
 ## Probabilistic AI (project 2)
-Second project in IT3030.
+Second project in IT3030. This project implements a variational autoencoder (VAE).
 
 ## Time series prediction (project 3)
-Third project in IT3030.
+Third project in IT3030. This project implements time sereis predictions.
