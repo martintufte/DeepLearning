@@ -9,4 +9,4 @@ The data generator included creates binary images of arrows pointing up, left, r
 Second project in IT3030. This project implements a variational autoencoder (VAE).
 
 ## Time series prediction (project 3)
-Third project in IT3030. This project implements time sereis predictions.
+Third project in IT3030. This project implements time sereis predictions (imbalance forecasts).
