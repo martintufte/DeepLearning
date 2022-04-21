@@ -25,5 +25,7 @@ if __name__=="__main__":
     train      = prep_data("no1_train.csv")
     validation = prep_data("no1_validation.csv")
     
+    train.head()
+    
     
     print(train.columns)
