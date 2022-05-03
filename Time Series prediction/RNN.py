@@ -28,7 +28,7 @@ class LossHistory(keras.callbacks.Callback):
 
 
 class RNN:
-    def __init__(self, n_seq, n_features, force_learn = False, file_name = "RNN"):
+    def __init__(self, n_seq, features, force_learn = False, file_name = "RNN"):
         '''
         The model is a RNN for sequence data.
         '''
@@ -37,14 +37,16 @@ class RNN:
         self.file_name = "./models/" + file_name
         self.history = LossHistory()
         self.n_seq = n_seq
-        self.n_features = n_features
+        self.features = features
+        self.n_features = len(features)
         
         
         ### RNN
         
-        input_shape = (n_seq, n_features) # n_seq, n_features
+        input_shape = (n_seq, self.n_features) # n_seq, n_features
         rnn_input = Input( shape=input_shape )
-        x = LSTM(units=32, activation='tanh', return_sequences = False)(rnn_input)
+        x = LSTM(units=128, activation='tanh', return_sequences = True)(rnn_input)
+        x = LSTM(units=64, activation='tanh', return_sequences = False)(x)
         rnn_output = Dense(1, name="output")(x)
         self.model = Model(rnn_input, rnn_output, name='RNN')
         
@@ -90,11 +92,47 @@ class RNN:
     
     
     def predict(self, x):
+        '''
+        x has shape (1, n_seq, n_features)
+        '''
         return self.model.predict(x)
+
+    
+    def fix(self, x):
+        '''
+        Fix the input such that it is an array with shape (1, n_seq, n_features), float
+        '''
+        return np.array(x, dtype=float).reshape(1, self.n_seq, self.n_features)
 
 
     def multistep_prediction(self, df, inputs, start_idx, n_steps=24):
+        '''
+        Implementation of the n in 1 out multistep predictions.
+        x has shape (n_samples, n_seq, n_features)
+        '''
         
-        # TODO
+        df_copy = df.copy()
         
-        pass
+        model_input = self.fix( df_copy.loc[start_idx:(start_idx + self.n_seq - 1), inputs] )
+        
+        forecasts = np.zeros(n_steps)
+        
+        forecasts[0] = self.model.predict(model_input)
+        
+        for i in range(1, n_steps):
+            df_copy.loc[start_idx + i + self.n_seq - 1, 'previous_y'] = forecasts[i-1]
+            
+            # Extract new input from copied x. Note that all prev_y from imbalance estimates in
+            # the forecast window will be replaced with forecasts iteratively
+            model_input = self.fix( df_copy.loc[(start_idx + i):(start_idx + i + self.n_seq - 1), inputs] )
+            
+            forecasts[i] = self.model.predict(model_input)
+        
+        return forecasts
+    
+    
+    
+    
+    
+    
+    
