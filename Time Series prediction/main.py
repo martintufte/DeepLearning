@@ -9,59 +9,65 @@ Created on Mon Jan 31 12:43:50 2022
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-
-# import preprocessing and sequence creation
-from data_wrangle import preprocesser, create_sequences
 from RNN import RNN
+from data_wrangle import preprocesser, create_sequences
 
 
 
 if __name__=="__main__":
-    # read in data
+    
+    ### Read the data
     train = pd.read_csv('./data/no1_train.csv')
     validation = pd.read_csv('./data/no1_validation.csv')
+    #test = pd.read_csv('./data/no1_test.csv')
     
-    # preprocessing
-    pre = preprocesser(clamp_y=True, use_date_time_features=True, use_lag_featues=True)
+    
+    ### Preprocess
+    pre = preprocesser(use_clamped_y = True,
+                       use_date_time_features = True,
+                       use_lag_featues = True,
+                       use_alternative = True)
+    
     train = pre.fit_transform(train)
     validation = pre.transform(validation)
+    #test = pre.transform(test)
     
-    # create into sequences, with sequence inputs and length
-    inputs = ['previous_y', 'hydro', 'micro', 'thermal', 'wind', 'river', 'total', 'sys_reg',
-              'flow', 'is_winter', 'is_spring', 'is_summer', 'is_fall',
-              'is_weekday', 'is_weekend', 'is_night', 'is_morning', 'is_midday',
-              'is_evening', 'lag_one_day', 'lag_two_days', 'lag_one_week']
-    n_seq = 144
-    
-    # time duration: (ca. 2 min), seq[0] is x, seq[1] is y
-    train_seq = create_sequences(train, n_seq, inputs, outputs='y')
-    validation_seq = create_sequences(validation, n_seq, inputs, outputs='y')
+    # input features, previous_y index
+    inputs = list(train.columns)
+    inputs = [i for i in inputs if i not in {'index', 'start_time', 'y'}]
+    prev_y_idx = np.where(np.array(inputs)=='previous_y')[0]
     
     
-    # create first RNN
-    rnn = RNN(n_seq, inputs, force_learn=True, file_name="RNN3")
-    rnn.fit(train_seq, validation_seq, batch_size=128, epochs=10)
     
-    # plot mse loss history
-    #plt.plot(np.arange(1742*4)/1742, rnn.history.history['loss'])
-    #plt.scatter(np.arange(4)+1, rnn.history.history['val_loss'], color='black', marker='x')
-    #plt.yscale('log')
-    #plt.show()
+    ### Create sequences -> np.genfromtxt('train_seq.csv', delimiter=',')
+    x_train, y_train = create_sequences(train, 144, inputs)
+    x_val, y_val = create_sequences(validation, 144, inputs)
+    #x_test, y_test = create_sequences(test, n_seq = 144)
+    _, n_seq, n_features = x_train.shape
+
     
     
-    # create predictions
+    ### Hold-out data set
+
+    
+    
+    ### LSTM with 1 hidden layer, 128 units, lrate 1e-4, 30 epochs, 64 in batch_size
+    ###           some variables are min-maxed, others are standardized
+    rnn2 = RNN(n_seq, n_features, force_learn=False, file_name="RNN_8", lrate=1e-4)
+    rnn2.fit((x_train, y_train), (x_val, y_val), batch_size=64, epochs=20)
+    
+    
+    
+    
     
     for i in range(1000, 3000, 200):
         start_idx = i
+        n_steps = 24
         
-        prediction = rnn.multistep_prediction(train, inputs, start_idx)
+        prediction = rnn2.n_in_1_out(x_train, prev_y_idx, start_idx, n_steps)
         
-        # plot prediction
-        plt.plot(np.arange(start_idx-100, start_idx+25), train.loc[(start_idx-100):(start_idx+24), 'y'])
-        plt.plot(np.arange(start_idx+1, start_idx+25), prediction)
+        plt.plot(y_train[start_idx:(start_idx + n_steps)])
+        plt.plot(prediction)
         plt.show()
-
-
 
 
