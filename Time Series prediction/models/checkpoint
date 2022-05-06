@@ -1,2 +1,2 @@
-model_checkpoint_path: "RNN_8"
-all_model_checkpoint_paths: "RNN_8"
+model_checkpoint_path: "RNN_standard2"
+all_model_checkpoint_paths: "RNN_standard2"

@@ -6,12 +6,12 @@ Created on Fri Apr 22 15:02:58 2022
 """
 
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Flatten, Reshape, LSTM
-    
+from tensorflow.keras.layers import Input, Dense, LSTM
+
+from plotting import plot_learning
 
 
 class LossHistory(keras.callbacks.Callback):
@@ -45,6 +45,9 @@ class RNN:
         rnn_input = Input( shape=input_shape )
         x = LSTM(units=128, activation='tanh', return_sequences = False)(rnn_input)
         rnn_output = Dense(1, name="output")(x)
+        
+        #rnn_output = Dense(1, kernel_regularizer=tf.keras.regularizers.L1(l1=1e-3), name="output")(x) # with regulizer
+        
         self.model = Model(rnn_input, rnn_output, name='RNN')
         
         self.model.compile(loss="MSE", optimizer=keras.optimizers.Adam(learning_rate=lrate))
@@ -67,7 +70,7 @@ class RNN:
         return done_training
     
     
-    def fit(self, data, val_data, batch_size=64, epochs=1):
+    def fit(self, data, val_data, batch_size=64, epochs=1, plot=True):
         """
         Train model if required. As we have a one-channel model we take care to
         only use the first channel of the data.
@@ -85,6 +88,9 @@ class RNN:
             # Save weights and leave
             self.model.save_weights(filepath=self.file_name)
             self.done_training = True
+            
+            if plot:
+                plot_learning(self)
     
     
     def predict(self, x):
@@ -94,17 +100,10 @@ class RNN:
         return self.model.predict(x)
 
     
-    def fix(self, x):
-        '''
-        Fix the input such that it is an array with shape (1, n_seq, n_features), float
-        '''
-        return np.array(x, dtype=float).reshape(1, self.n_seq, self.n_features)
-    
-    
-    def n_in_1_out(self, sequences, prev_y_idx, start_idx, n_steps=24):
+    def n_in_1_out(self, sequences, start_idx, n_steps=24):
         '''
         Implements the n in 1 out multistep predictions.
-        x has shape (n_samples, n_seq, n_features)
+        - sequences has shape (n_samples, n_seq, n_features)
         '''
         
         model_input = sequences[[start_idx]]
@@ -113,23 +112,30 @@ class RNN:
         
         for i in range(1, n_steps):
             model_input = sequences[[start_idx + i]]
-            model_input[0, -i:, prev_y_idx] = forecasts[:i]
+            model_input[0, -i:, 0] = forecasts[:i]
             
             forecasts[i] = self.model.predict(model_input)
             
         return forecasts
         
     
-
+    '''
+    def fix_input_format(self, x):
+        #'
+        Fix the input such that it is an array with shape (1, n_seq, n_features), float
+        #'
+        return np.array(x, dtype=float).reshape(1, self.n_seq, self.n_features)
+    
+    
     def n_in_1_out_old(self, df, inputs, start_idx, n_steps=24):
-        '''
+        #'
         Implementation of the n in 1 out multistep predictions.
         x has shape (n, n_features)
-        '''
+        #'
         
         df_copy = df.copy()
         
-        model_input = self.fix( df_copy.loc[start_idx:(start_idx + self.n_seq - 1), inputs] )
+        model_input = self.fix_input_format( df_copy.loc[start_idx:(start_idx + self.n_seq - 1), inputs] )
         
         forecasts = np.zeros(n_steps)
         
@@ -145,6 +151,7 @@ class RNN:
             forecasts[i] = self.model.predict(model_input)
         
         return forecasts
+    '''
     
     
     
